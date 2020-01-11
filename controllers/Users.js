@@ -1,6 +1,9 @@
-const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const secret = require("../secretkey");
+const User = require("../models/User");
+const Employee = require("../models/Employee");
+const Contractor = require("../models/Contractor");
 
 // sign up
 exports.postUser = (req, res, next) => {
@@ -18,28 +21,40 @@ exports.postUser = (req, res, next) => {
                 throw error;
             }
             bcrypt.hash(password, 10, (err, hashedPassword) => {
-                const user = new User({
-                    email: req.body.email,
-                    password: hashedPassword,
-                    name: req.body.name,
-                    role: req.body.role,
-                    shifts: null
-                });
+                let user;
+                console.log("Role: ", role);
+                switch(role) {
+                    case ("Employee"):
+                        console.log("Employee Created");
+                        user = new Employee({
+                            email: email,
+                            password: hashedPassword,
+                            name: name,
+                        });
+                        break;
+                    case ("Contractor"):
+                        console.log("Contracter Created");
+                        user = new Contractor({
+                            email: email,
+                            password: hashedPassword,
+                            name: name,
+                        });
+                        break;
+                    default:
+                        const error = new Error("This role does not exist");
+                        error.statusCode = 400;
+                        throw err;
+                }
                 user.save()
-                .then(result => {
-                    console.log("User created: ", result);
-                    res.status(201).json({message: "User Created", userId: result._id})
-                })
-                .catch(err => {
-                    console.log(err);
-                });
+                    .then((user) => {
+                        res.status(201).json({message: "User Created", userId: user._id})
+                    })
+                    .catch(err => {
+                        console.log(err);
+                    });
             })
 
         })
-    // add password validation
-    // add role validation
-    // add password hashing and salting
-
 };
 
 exports.putUser = (req, res, next) => {
@@ -65,15 +80,18 @@ exports.putUser = (req, res, next) => {
             const token = jwt.sign(
                 {
                     email: foundUser.email,
-                    userId: foundUser._id.toString()
+                    userId: foundUser._id.toString(),
+                    role: foundUser.role,
                 },
-                "qwerouqweoiruqonlksdanfmnxva;sdfklasdjf",
+                secret,
                 { expiresIn: "1h"}
             );
             res.status(200).json(
                 {
                     token: token,
-                    userId: foundUser._id.toString()
+                    userId: foundUser._id.toString(),
+                    role: foundUser.role,
+                    isEmployed: !!foundUser.contractorId || foundUser.role == "Contractor",
                 })
         })
         .catch(err => {

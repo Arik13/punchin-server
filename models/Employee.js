@@ -1,14 +1,18 @@
 const mongoose = require('mongoose');
+const User = require("./User");
+const Schema = mongoose.Schema;
 
-const employeeSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true
+const employeeSchema = new Schema({
+    contractorId: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        // required: true
     },
-    role: {
-        type: String,
-        required: true
-    },
-}, { collection: "Employees"});
+    jobs: [{
+        type: Schema.Types.ObjectId,
+        ref: "Job"
+    }]
+}, { collection: "Employees", discriminatorKey: "role"});
 
-module.exports = mongoose.model('Employees', employeeSchema);
+// module.exports = mongoose.model('Employee', employeeSchema);
+module.exports = User.discriminator("Employee", employeeSchema);

@@ -8,10 +8,15 @@ const mongoose = require('mongoose');
 // Middleware
 app.use(bodyParser.json());
 app.use((req, res, next) => {
-    console.log("Request: ", req.body);
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "*");
     res.header("Access-Control-Allow-Methods", "*");
+    next();
+});
+
+app.use((req, res, next) => {
+    console.log("Incoming request: ", req.body);
+    // console.log("Incoming request headers: ", req.headers);
     next();
 });
 
@@ -32,7 +37,10 @@ app.use(userRoutes);
 
 
 mongoose
-    .connect("mongodb+srv://arik:sjEni561gT5JG4np@cluster0-lw22l.mongodb.net/punchin?retryWrites=true&w=majority")
+    .connect("mongodb+srv://arik:sjEni561gT5JG4np@cluster0-lw22l.mongodb.net/punchin?retryWrites=true&w=majority", {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    })
     .then(result => {
         app.listen(3000);
         console.log("Connected to mongodb");
